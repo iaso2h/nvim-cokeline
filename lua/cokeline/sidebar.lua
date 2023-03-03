@@ -42,17 +42,42 @@ local get_components = function()
   -- where each leaf is represented as a `{'leaf', <winid>}` table.
   local window_tree = layout[2]
 
-  -- Since we're checking if we need to display sidebars we're only
-  -- interested in the first and last window splits.
+  -- Know issues:
+  -- 1) The Dap UI sidebar is now partially supported when the Dap UI sidebar is
+  --    left-aligned.
+  -- 2) Cokeline now can setup with a table value, but only
+  -- ```
+  -- _G.cokeline.config.sidebar.filetype = {"NvimTree", "dapui_"}
+  -- ``` is allowed.
+  -- Haven't test on CHADTree or NERDTree yet, but it should work well as previously
+  -- considering the nvim-tree detection is preserved
   local first_split = window_tree[1]
-  if first_split[1] ~= "leaf" then
+  local winid
+  if first_split[1] == "col" and first_split[2][1][1] == "leaf" then
+    -- Dap-UI windows on the LEFT side
+    winid = first_split[2][1][2]
+  elseif first_split[1] == "leaf" then
+    -- File Explorer
+    winid = first_split[2]
+  else
     return {}
   end
 
-  local winid = first_split[2]
   local bufnr = api.nvim_win_get_buf(winid)
 
-  if bo[bufnr].filetype ~= _G.cokeline.config.sidebar.filetype then
+  local config_filetype = _G.cokeline.config.sidebar.filetype
+  if type(config_filetype) == "string" then
+    config_filetype = {config_filetype}
+  end
+
+  local valid_filetype = false
+  for _, filetype in ipairs(config_filetype) do
+    if string.match(bo[bufnr].filetype, filetype) then
+      valid_filetype = true
+    end
+  end
+
+  if not valid_filetype then
     return {}
   end
 
