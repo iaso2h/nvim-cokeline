@@ -4,7 +4,6 @@ local config = require("cokeline/config")
 local mappings = require("cokeline/mappings")
 local rendering = require("cokeline/rendering")
 
-local fn = vim.fn
 local opt = vim.opt
 
 ---Global table used to manage the plugin's state.
@@ -23,6 +22,8 @@ _G.cokeline = {
 
   ---@type Buffer[]
   visible_buffers = {},
+
+  __handlers = require("cokeline/handlers"),
 }
 
 ---@param preferences table|nil
@@ -30,20 +31,6 @@ local setup = function(preferences)
   _G.cokeline.config = config.get(preferences or {})
   augroups.setup()
   mappings.setup()
-
-  if fn.has("tablineat") then
-    vim.cmd([[
-    function! CokelineHandleClick(minwid, clicks, button, modifiers)
-      let l:command = (a:button =~ 'l') ? 'buffer' : 'bdelete'
-      execute printf('%s %s', l:command, a:minwid)
-    endfunction
-
-    function! CokelineHandleCloseButtonClick(minwid, clicks, button, modifiers)
-      if a:button != 'l' | return | endif
-      execute printf('bdelete %s', a:minwid)
-    endfunction
-  ]])
-  end
 
   opt.showtabline = 2
   opt.tabline = "%!v:lua.cokeline.tabline()"

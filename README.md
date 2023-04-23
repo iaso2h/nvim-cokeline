@@ -473,14 +473,21 @@ require('cokeline').setup({
 
     -- Which buffer to focus when a buffer is deleted, `prev` focuses the
     -- buffer to the left of the deleted one while `next` focuses the one the
-    -- right. Turned off by default.
-    -- default: `false`
+    -- right.
+    -- default: 'next'.
     focus_on_delete = 'prev' | 'next',
 
     -- If set to `last` new buffers are added to the end of the bufferline,
     -- if `next` they are added next to the current buffer.
-    -- default: 'last',
-    new_buffers_position = 'last' | 'next',
+    -- if set to `directory` buffers are sorted by their full path.
+    -- if set to `number` buffers are sorted by bufnr, as in default Neovim
+    -- default: 'last'.
+    new_buffers_position = 'last' | 'next' | 'directory' | 'number',
+
+    -- If true, right clicking a buffer will close it
+    -- The close button will still work normally
+    -- Default: true
+    delete_on_right_click = true | false,
   },
 
   mappings = {
@@ -677,8 +684,12 @@ Every component passed to the `components` list has to be a table of the form:
   style = 'attr1,attr2,...' | function(buffer) -> 'attr1,attr2,...',
 
   -- If `true` the buffer will be deleted when this component is
-  -- left-clicked (usually used to implement close buttons).
+  -- left-clicked (usually used to implement close buttons, overrides `on_click`).
   delete_buffer_on_left_click = true | false,
+
+  -- Handles click event for a component
+  -- If not set, component will have the default click behavior
+  on_click = nil | function(idx, clicks, buttons, modifiers, buffer)
 
   truncation = {
     -- default: index of the component in the `components` table (1 for the
@@ -724,7 +735,17 @@ like in the following example (where it's set to `'left'`):
 
 ## :musical_keyboard: Mappings
 
-We expose the following `<Plug>` mappings which can be used as the right hand
+You can use the `mappings` module to create mappings from Lua:
+
+```lua
+vim.keymap.set("n", "<leader>bp", function()
+    require('cokeline.mappings').pick("focus")
+end, { desc = "Pick a buffer to focus" })
+
+-- etc....
+```
+
+Alternatively, we expose the following `<Plug>` mappings which can be used as the right hand
 side of other mappings:
 
 ```lua
